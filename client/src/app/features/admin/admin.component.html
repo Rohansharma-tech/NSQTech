@@ -1,0 +1,290 @@
+<div class="app-shell">
+
+  <!-- Topbar -->
+  <header class="topbar" role="banner">
+    <div class="topbar-brand">
+      <div class="brand-icon" aria-hidden="true">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+      </div>
+      <span class="brand-name">MPloyChek</span>
+    </div>
+    <div class="topbar-right">
+      <div class="user-pill">
+        <div class="user-avatar" aria-hidden="true">{{ (userState.currentUser()?.name || 'A').charAt(0) }}</div>
+        <div class="user-info hide-mobile">
+          <span class="user-name">{{ userState.currentUser()?.name }}</span>
+          <span class="user-role">Administrator</span>
+        </div>
+      </div>
+      <a routerLink="/dashboard" class="btn btn-secondary btn-sm">Dashboard</a>
+    </div>
+  </header>
+
+  <div class="shell-body">
+
+    <!-- Sidebar -->
+    <aside class="sidebar" role="navigation" aria-label="Main navigation">
+      <nav class="sidebar-nav">
+        <a class="sidebar-item" routerLink="/dashboard" aria-label="Dashboard">
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/><path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"/></svg>
+          <span>Dashboard</span>
+          <span class="nav-shortcut">DB</span>
+        </a>
+        <a class="sidebar-item active" aria-current="page" aria-label="Users">
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>
+          <span>Users</span>
+          <span class="nav-shortcut">US</span>
+        </a>
+        <a class="sidebar-item" routerLink="/dashboard" aria-label="Records">
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/></svg>
+          <span>Records</span>
+          <span class="nav-shortcut">RC</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <main class="main-content" id="admin-main">
+
+      <!-- Page header -->
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Users</h1>
+          <p class="page-subtitle">Manage employee accounts, roles and access levels.</p>
+        </div>
+        <button id="create-user-btn" class="btn btn-primary" (click)="openCreate()" aria-label="Add new user">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="15" height="15" aria-hidden="true">
+            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+          </svg>
+          Add User
+        </button>
+      </div>
+
+      <!-- Alerts -->
+      @if (successMsg()) {
+        <div class="alert alert-success" role="status" aria-live="polite">
+          <svg width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+          {{ successMsg() }}
+        </div>
+      }
+      @if (errorMsg()) {
+        <div class="alert alert-error" role="alert" aria-live="assertive">
+          <svg width="15" height="15" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+          {{ errorMsg() }}
+        </div>
+      }
+
+      <!-- Filter toolbar -->
+      <div class="filters-row" role="search">
+        <div class="search-field">
+          <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+          </svg>
+          <input id="user-search" type="search" class="form-control search-input"
+            placeholder="Search users..."
+            [value]="searchTerm()"
+            (input)="searchTerm.set($any($event.target).value)"
+            aria-label="Search users"
+          />
+        </div>
+        <select id="filter-role" class="form-control filter-select" [value]="filterRole()"
+          (change)="filterRole.set($any($event.target).value)" aria-label="Filter by role">
+          <option value="">All Roles</option>
+          <option value="admin">Admin</option>
+          <option value="general">General User</option>
+        </select>
+        <select id="filter-status" class="form-control filter-select" [value]="filterStatus()"
+          (change)="filterStatus.set($any($event.target).value)" aria-label="Filter by status">
+          <option value="">All Statuses</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+        <span class="result-count" aria-live="polite">{{ filteredUsers.length }} user{{ filteredUsers.length !== 1 ? 's' : '' }}</span>
+      </div>
+
+      <!-- Users table -->
+      <div class="card table-card">
+
+        @if (loading()) {
+          <div class="loading-state" aria-live="polite" aria-busy="true">
+            <span class="spinner spinner-blue" style="width:20px;height:20px;border-width:2px;" aria-hidden="true"></span>
+            <p>Loading users...</p>
+          </div>
+        } @else if (filteredUsers.length === 0) {
+          <div class="empty-state">
+            <svg class="state-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>
+            <h3>No users found</h3>
+            <p>Adjust your filters or add a new user.</p>
+          </div>
+        } @else {
+          <div class="table-scroll">
+            <table class="data-table" aria-label="User management table">
+              <thead>
+                <tr>
+                  <th>User ID</th>
+                  <th>Name</th>
+                  <th class="hide-mobile">Email</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th class="hide-mobile">Access Lvl</th>
+                  <th class="hide-mobile">Last Login</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (user of filteredUsers; track user._id) {
+                  <tr [class.self-row]="isSelf(user)">
+                    <td><code class="id-code">{{ user.userId }}</code></td>
+                    <td>
+                      <div class="user-cell">
+                        <div class="user-avatar-sm" [class]="'ua-' + user.role">{{ user.name.charAt(0).toUpperCase() }}</div>
+                        <span class="user-display-name">
+                          {{ user.name }}
+                          @if (isSelf(user)) {
+                            <span class="you-tag" aria-label="This is you">(You)</span>
+                          }
+                        </span>
+                      </div>
+                    </td>
+                    <td class="hide-mobile text-muted text-sm">{{ user.email }}</td>
+                    <td>
+                      <span [class]="'badge badge-' + user.role">{{ user.role === 'admin' ? 'Admin' : 'General User' }}</span>
+                    </td>
+                    <td>
+                      <span [class]="'badge badge-' + (user.isActive ? 'active' : 'inactive')">{{ user.isActive ? 'Active' : 'Inactive' }}</span>
+                    </td>
+                    <td class="hide-mobile text-muted text-sm">{{ user.accessLevel }}</td>
+                    <td class="hide-mobile text-muted text-sm">{{ user.lastLogin ? (user.lastLogin | date:'d MMM y') : 'Never' }}</td>
+                    <td>
+                      <div class="action-row">
+                        <button class="btn btn-ghost btn-sm"
+                          (click)="openEdit(user)"
+                          [attr.aria-label]="'Edit ' + user.userId"
+                          title="Edit user">
+                          Edit
+                        </button>
+                        <button
+                          class="btn btn-sm"
+                          [class]="user.isActive ? 'btn-danger-outline' : 'btn-success-outline'"
+                          (click)="toggleStatus(user)"
+                          [disabled]="isSelf(user) || actionLoading()"
+                          [attr.aria-label]="(user.isActive ? 'Deactivate ' : 'Activate ') + user.userId"
+                          [title]="user.isActive ? 'Deactivate' : 'Activate'">
+                          {{ user.isActive ? 'Deactivate' : 'Activate' }}
+                        </button>
+                        <button class="btn btn-danger-outline btn-sm"
+                          (click)="deleteUser(user)"
+                          [disabled]="isSelf(user) || actionLoading()"
+                          [attr.aria-label]="'Delete ' + user.userId"
+                          title="Delete user">
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ── Create / Edit Modal ─────────────────────────────────────────── -->
+  @if (modalMode()) {
+    <div class="modal-overlay" (click)="closeModal()" role="dialog" aria-modal="true"
+      [attr.aria-label]="modalMode() === 'create' ? 'Create new user' : 'Edit user'">
+      <div class="modal-box" (click)="$event.stopPropagation()">
+        <div class="modal-head">
+          <div>
+            <h2 class="modal-title">{{ modalMode() === 'create' ? 'Add User' : 'Edit User' }}</h2>
+            <p class="modal-subtitle">{{ modalMode() === 'create' ? 'Create a new employee account.' : 'Update account details.' }}</p>
+          </div>
+          <button class="btn btn-ghost btn-icon" (click)="closeModal()" aria-label="Close dialog">
+            <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+          </button>
+        </div>
+
+        <div class="divider"></div>
+
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="modal-form">
+
+          <div class="form-group">
+            <label class="form-label" for="modal-userId">User ID</label>
+            <input id="modal-userId" type="text" class="form-control" formControlName="userId"
+              [class.is-invalid]="form.get('userId')!.invalid && form.get('userId')!.touched"
+              placeholder="e.g. jsmith01" autocomplete="off"/>
+            @if (form.get('userId')!.invalid && form.get('userId')!.touched) {
+              <span class="form-error" role="alert">3+ characters, alphanumeric, underscores and hyphens only</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="modal-name">Full Name</label>
+            <input id="modal-name" type="text" class="form-control" formControlName="name"
+              [class.is-invalid]="form.get('name')!.invalid && form.get('name')!.touched"
+              placeholder="e.g. Jane Smith" autocomplete="off"/>
+            @if (form.get('name')!.invalid && form.get('name')!.touched) {
+              <span class="form-error" role="alert">Name is required (minimum 2 characters)</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="modal-email">Email Address</label>
+            <input id="modal-email" type="email" class="form-control" formControlName="email"
+              [class.is-invalid]="form.get('email')!.invalid && form.get('email')!.touched"
+              placeholder="e.g. jsmith@nsqtech.com" autocomplete="off"/>
+            @if (form.get('email')!.invalid && form.get('email')!.touched) {
+              <span class="form-error" role="alert">A valid email address is required</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="modal-password">
+              Password
+              @if (modalMode() === 'edit') {
+                <span class="form-hint">Leave blank to keep current password</span>
+              }
+            </label>
+            <input id="modal-password" type="password" class="form-control" formControlName="password"
+              [class.is-invalid]="form.get('password')!.invalid && form.get('password')!.touched"
+              [placeholder]="modalMode() === 'create' ? 'Minimum 6 characters' : 'New password (optional)'"
+              autocomplete="new-password"/>
+            @if (form.get('password')!.invalid && form.get('password')!.touched) {
+              <span class="form-error" role="alert">Password must be at least 6 characters</span>
+            }
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="modal-role">Role</label>
+              <select id="modal-role" class="form-control" formControlName="role" aria-label="Select role">
+                <option value="general">General User</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="modal-access">Access Level (1–5)</label>
+              <input id="modal-access" type="number" class="form-control" formControlName="accessLevel" min="1" max="5"/>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeModal()" id="modal-cancel-btn">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="modal-submit-btn"
+              [disabled]="form.invalid || actionLoading()">
+              @if (actionLoading()) { <span class="spinner" aria-hidden="true"></span> }
+              {{ modalMode() === 'create' ? 'Create Account' : 'Save Changes' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

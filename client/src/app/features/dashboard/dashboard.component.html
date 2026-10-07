@@ -1,0 +1,374 @@
+<div class="app-shell">
+
+  <!-- ── Top navbar ──────────────────────────────────────────────────────── -->
+  <header class="topbar" role="banner">
+    <div class="topbar-brand" aria-label="MPloyChek">
+      <div class="brand-icon" aria-hidden="true">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+      </div>
+      <span class="brand-name">MPloyChek</span>
+    </div>
+
+    <nav class="topbar-nav hide-mobile" aria-label="Top navigation"></nav>
+
+    <div class="topbar-right">
+      <div class="user-pill">
+        <div class="user-avatar" aria-hidden="true">{{ (currentUser()?.name || 'U').charAt(0) }}</div>
+        <div class="user-info hide-mobile">
+          <span class="user-name">{{ currentUser()?.name }}</span>
+          <span class="user-role">{{ currentUser()?.role === 'admin' ? 'Administrator' : 'General User' }}</span>
+        </div>
+      </div>
+      <button class="btn btn-secondary btn-sm" id="logout-btn" (click)="logout()" aria-label="Sign out">
+        Sign out
+      </button>
+    </div>
+  </header>
+
+  <div class="shell-body">
+
+    <!-- ── Sidebar ─────────────────────────────────────────────────────── -->
+    <aside class="sidebar" role="navigation" aria-label="Main navigation">
+      <nav class="sidebar-nav">
+        <a class="sidebar-item active" aria-current="page">
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/><path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"/></svg>
+          <span>Dashboard</span>
+          <span class="nav-shortcut hide-mobile">DB</span>
+        </a>
+
+        @if (isAdmin()) {
+          <a class="sidebar-item" routerLink="/admin" aria-label="User management">
+            <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg>
+            <span>Users</span>
+            <span class="nav-shortcut hide-mobile">US</span>
+          </a>
+        }
+
+        <a class="sidebar-item" (click)="scrollTo('records-section')" role="button" tabindex="0" aria-label="Go to Records section" (keyup.enter)="scrollTo('records-section')">
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/></svg>
+          <span>Records</span>
+          <span class="nav-shortcut hide-mobile">RC</span>
+        </a>
+
+        @if (!isAdmin()) {
+          <a class="sidebar-item" routerLink="/profile" aria-label="My Profile">
+            <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
+            <span>My Profile</span>
+            <span class="nav-shortcut hide-mobile">PR</span>
+          </a>
+        }
+
+      </nav>
+
+      <!-- Session card -->
+      <div class="session-card">
+        <p class="session-label">Session</p>
+        <div class="session-user">
+          <div class="session-avatar">{{ (currentUser()?.name || 'U').charAt(0) }}</div>
+          <div class="session-info">
+            <span class="session-name">{{ currentUser()?.name }}</span>
+            <span class="session-email">{{ currentUser()?.email }}</span>
+          </div>
+        </div>
+        <p class="session-note">
+          Records are filtered based on your access level ({{ currentUser()?.accessLevel }}).
+        </p>
+      </div>
+    </aside>
+
+    <!-- ── Main content ────────────────────────────────────────────────── -->
+    <main class="main-content" id="main">
+
+      <!-- Page title -->
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">{{ isAdmin() ? 'Admin Dashboard' : 'Dashboard' }}</h1>
+          <p class="page-subtitle">
+            {{ isAdmin() ? 'Operational summary and record management.' : 'Your profile and assigned verification records.' }}
+          </p>
+        </div>
+
+        <!-- API delay control -->
+        <div class="delay-widget" role="group" aria-label="API delay setting">
+          <span class="delay-widget-label">API Delay</span>
+          <div class="delay-chips">
+            @for (p of delayPresets; track p) {
+              <button type="button" class="delay-chip" [class.active]="delayMs() === p" (click)="setDelay(p)"
+                [attr.aria-pressed]="delayMs() === p"
+                [attr.aria-label]="'Delay ' + (p === 0 ? 'off' : p + 'ms')">
+                {{ p === 0 ? 'Off' : p >= 1000 ? (p/1000)+'s' : p+'ms' }}
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Stat cards ──────────────────────────────────────────────── -->
+      @if (isAdmin()) {
+        <div class="stat-grid">
+          <div class="stat-card card">
+            <p class="stat-label">Total Records</p>
+            @if (recordsLoading() && !pagination()) {
+              <div class="skeleton sk-num"></div>
+            } @else {
+              <p class="stat-value">{{ pagination()?.total ?? '—' }}</p>
+            }
+            <p class="stat-sub">All access levels</p>
+          </div>
+          <div class="stat-card card">
+            <p class="stat-label">Active Records</p>
+            @if (recordsLoading() && !pagination()) {
+              <div class="skeleton sk-num"></div>
+            } @else {
+              <p class="stat-value">{{ activeCount() }}</p>
+            }
+            <p class="stat-sub">Active on this page</p>
+          </div>
+          <div class="stat-card card">
+            <p class="stat-label">Pending Review</p>
+            @if (recordsLoading() && !pagination()) {
+              <div class="skeleton sk-num"></div>
+            } @else {
+              <p class="stat-value">{{ pendingCount() }}</p>
+            }
+            <p class="stat-sub">Pending on this page</p>
+          </div>
+          <div class="stat-card card">
+            <p class="stat-label">Access Level</p>
+            <p class="stat-value">{{ currentUser()?.accessLevel ?? '—' }}</p>
+            <p class="stat-sub">Read / Write / Delete</p>
+          </div>
+        </div>
+      }
+
+      <!-- ── Profile card ────────────────────────────────────────────── -->
+      <section aria-label="User profile" class="profile-section" id="profile-section">
+        @if (profileLoading()) {
+          <div class="profile-card card sk-profile">
+            <div class="skeleton sk-avatar-lg"></div>
+            <div class="sk-profile-lines">
+              <div class="skeleton sk-line" style="width:180px; height:18px;"></div>
+              <div class="skeleton sk-line" style="width:140px; height:13px; margin-top:6px;"></div>
+              <div class="skeleton sk-line" style="width:260px; height:13px; margin-top:12px;"></div>
+            </div>
+          </div>
+        } @else if (profileError()) {
+          <div class="alert alert-error">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+            {{ profileError() }}
+          </div>
+        } @else if (currentUser()) {
+          <div class="profile-card card animate-fade-up">
+            <div class="profile-avatar-lg">{{ (currentUser()!.name).charAt(0).toUpperCase() }}</div>
+            <div class="profile-details">
+              <div class="profile-name-row">
+                <h2 class="profile-name">{{ currentUser()!.name }}</h2>
+                <span [class]="'badge badge-' + currentUser()!.role">
+                  {{ currentUser()!.role === 'admin' ? 'Admin' : 'General User' }}
+                </span>
+                <span [class]="'badge badge-' + (currentUser()!.isActive ? 'active' : 'inactive')">
+                  {{ currentUser()!.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </div>
+              <p class="profile-meta">ID: <strong>{{ currentUser()!.userId }}</strong> &nbsp;&middot;&nbsp; {{ currentUser()!.email }}</p>
+            </div>
+            <div class="profile-stats">
+              <div class="pstat">
+                <span class="pstat-label">Access Level</span>
+                <span class="pstat-value">{{ currentUser()!.accessLevel }}</span>
+              </div>
+              <div class="pstat">
+                <span class="pstat-label">Permissions</span>
+                <span class="pstat-value">{{ getAccessText() }}</span>
+              </div>
+              <div class="pstat">
+                <span class="pstat-label">Last Login</span>
+                <span class="pstat-value">{{ currentUser()!.lastLogin ? (currentUser()!.lastLogin! | date:'d MMM y, h:mm a') : 'First login' }}</span>
+              </div>
+            </div>
+          </div>
+        }
+      </section>
+
+      <!-- ── Records section ─────────────────────────────────────────── -->
+      <section aria-label="Records" class="records-section" id="records-section">
+        <div class="section-toolbar">
+          <div class="section-title-row">
+            <h2 class="section-title">
+              {{ isAdmin() ? 'All Records' : 'My Records' }}
+            </h2>
+            @if (pagination() && !recordsLoading()) {
+              <span class="record-total">{{ pagination()!.total }} total</span>
+            }
+          </div>
+
+          <!-- Filters -->
+          <div class="filters-row" role="search">
+            <div class="search-field">
+              <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+              </svg>
+              <input
+                id="record-search"
+                type="search"
+                class="form-control search-input"
+                placeholder="Search records..."
+                [formControl]="searchCtrl"
+                aria-label="Search records"
+              />
+            </div>
+
+            <select id="filter-category" class="form-control filter-select" [value]="filterCategory()"
+              (change)="setFilter('category', $any($event.target).value)" aria-label="Filter by category">
+              @for (c of categories; track c) {
+                <option [value]="c">{{ c || 'All Categories' }}</option>
+              }
+            </select>
+
+            <select id="filter-status" class="form-control filter-select" [value]="filterStatus()"
+              (change)="setFilter('status', $any($event.target).value)" aria-label="Filter by status">
+              @for (s of statuses; track s) {
+                <option [value]="s">{{ s ? (s | titlecase) : 'All Statuses' }}</option>
+              }
+            </select>
+
+            <select id="filter-priority" class="form-control filter-select" [value]="filterPriority()"
+              (change)="setFilter('priority', $any($event.target).value)" aria-label="Filter by priority">
+              @for (p of priorities; track p) {
+                <option [value]="p">{{ p ? (p | titlecase) : 'All Priorities' }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <!-- Table card -->
+        <div class="card table-card">
+
+          @if (timedOut()) {
+            <div class="error-state">
+              <svg class="state-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+              <h3>Request Timed Out</h3>
+              <p>The server took too long to respond.</p>
+              <button class="btn btn-primary btn-sm" (click)="retry()" id="retry-btn" style="margin-top:12px;">Retry</button>
+            </div>
+          } @else if (recordsError() && !recordsLoading()) {
+            <div class="error-state">
+              <svg class="state-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+              <h3>Failed to load records</h3>
+              <p>{{ recordsError() }}</p>
+              <button class="btn btn-secondary btn-sm" (click)="retry()" style="margin-top:12px;">Retry</button>
+            </div>
+          } @else {
+            <div class="table-scroll">
+              <table class="data-table" aria-label="Records table">
+                <thead>
+                  <tr>
+                    <th class="sortable" (click)="setSort('recordId')">
+                      Record ID
+                      @if (sortBy() === 'recordId') { <span aria-hidden="true">{{ sortOrder() === 'asc' ? ' ↑' : ' ↓' }}</span> }
+                    </th>
+                    <th class="sortable" (click)="setSort('title')">
+                      Title
+                      @if (sortBy() === 'title') { <span aria-hidden="true">{{ sortOrder() === 'asc' ? ' ↑' : ' ↓' }}</span> }
+                    </th>
+                    <th class="hide-mobile">Category</th>
+                    <th>Status</th>
+                    <th class="sortable" (click)="setSort('priority')">
+                      Priority
+                      @if (sortBy() === 'priority') { <span aria-hidden="true">{{ sortOrder() === 'asc' ? ' ↑' : ' ↓' }}</span> }
+                    </th>
+                    <th class="hide-mobile sortable" (click)="setSort('accessLevel')">
+                      Lvl
+                      @if (sortBy() === 'accessLevel') { <span aria-hidden="true">{{ sortOrder() === 'asc' ? ' ↑' : ' ↓' }}</span> }
+                    </th>
+                    <th class="hide-mobile sortable" (click)="setSort('createdAt')">
+                      Date
+                      @if (sortBy() === 'createdAt') { <span aria-hidden="true">{{ sortOrder() === 'asc' ? ' ↑' : ' ↓' }}</span> }
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @if (recordsLoading()) {
+                    <!-- Skeleton rows -->
+                    @for (i of [1,2,3,4,5,6,7,8]; track i) {
+                      <tr>
+                        <td><div class="skeleton" style="width:80px; height:13px;"></div></td>
+                        <td><div class="skeleton" style="width:200px; height:13px;"></div></td>
+                        <td class="hide-mobile"><div class="skeleton" style="width:80px; height:13px;"></div></td>
+                        <td><div class="skeleton" style="width:60px; height:20px; border-radius:999px;"></div></td>
+                        <td><div class="skeleton" style="width:60px; height:20px; border-radius:999px;"></div></td>
+                        <td class="hide-mobile"><div class="skeleton" style="width:24px; height:13px;"></div></td>
+                        <td class="hide-mobile"><div class="skeleton" style="width:80px; height:13px;"></div></td>
+                      </tr>
+                    }
+                  } @else if (records().length === 0) {
+                    <tr>
+                      <td colspan="7">
+                        <div class="empty-state">
+                          <svg class="state-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/></svg>
+                          <h3>No records found</h3>
+                          <p>Try adjusting your search or filter criteria.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  } @else {
+                    @for (record of records(); track record._id) {
+                      <tr>
+                        <td>
+                          <code class="record-id-code">{{ record.recordId }}</code>
+                        </td>
+                        <td>
+                          <p class="record-title">{{ record.title }}</p>
+                          <p class="record-desc text-muted text-sm">{{ record.category }} &middot; {{ record.createdBy }}</p>
+                        </td>
+                        <td class="hide-mobile">
+                          <span class="category-pill">{{ record.category }}</span>
+                        </td>
+                        <td>
+                          <span [class]="getStatusClass(record.status)">{{ record.status | titlecase }}</span>
+                        </td>
+                        <td>
+                          <span [class]="getPriorityClass(record.priority)">{{ record.priority | titlecase }}</span>
+                        </td>
+                        <td class="hide-mobile text-muted text-sm">{{ record.accessLevel }}</td>
+                        <td class="hide-mobile text-muted text-sm">{{ record.createdAt | date:'d MMM y' }}</td>
+                      </tr>
+                    }
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination -->
+            @if (pagination() && !recordsLoading() && pagination()!.totalPages > 1) {
+              <div class="table-footer">
+                <span class="text-sm text-muted">
+                  Showing {{ (currentPage() - 1) * pageLimit + 1 }}–{{ pageEnd() }} of {{ pagination()!.total }} records
+                </span>
+                <nav class="pagination" aria-label="Page navigation">
+                  <button class="page-btn" [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)" aria-label="Previous page">&#8249;</button>
+                  @for (p of getPageNumbers(); track p) {
+                    <button class="page-btn" [class.active]="p === currentPage()" (click)="goToPage(p)" [attr.aria-label]="'Page ' + p" [attr.aria-current]="p === currentPage() ? 'page' : null">{{ p }}</button>
+                  }
+                  <button class="page-btn" [disabled]="currentPage() === pagination()!.totalPages" (click)="goToPage(currentPage() + 1)" aria-label="Next page">&#8250;</button>
+                </nav>
+              </div>
+            }
+          }
+
+        </div>
+
+        <!-- Loading indicator text when fetching -->
+        @if (recordsLoading() && records().length > 0) {
+          <p class="fetching-note" aria-live="polite">
+            <span class="spinner spinner-blue" aria-hidden="true"></span>
+            Fetching records...
+          </p>
+        }
+      </section>
+
+    </main>
+  </div>
+</div>
