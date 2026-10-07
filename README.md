@@ -1,6 +1,6 @@
 # MPloyChek — NSQTech Code Challenge
 
-> **Candidate:** [Your Name] · **Position:** Software Intern · **Deadline:** 10 Oct 2026
+> **Candidate:** Rohan Sharma P · **Position:** Software Intern · **Deadline:** 10 Oct 2026
 
 A full-stack employee record management platform built for the NSQTech code challenge.
 
